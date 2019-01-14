@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>WebRTC Hands-On 2019</title>
+</head>
+
+<body>
+WebRTC Hands-On 2019 ScreenCapture<br />
+<button type="button" onclick="startVideo();">Start Video</button>
+<button type="button" onclick="connect();">Connect</button>
+<button type="button" onclick="hangUp();">Hang Up</button>
+&nbsp;
+<button type="button" onclick="addScreen();">Add Screen</button>
+<button type="button" onclick="removeScreen();">Remove Screen</button>
+<div style="width: 100%;">
+    <video id="local_video" autoplay muted=true style="width: 160px; height: 120px; border: 1px solid black;"></video>
+    <video id="remote_video" autoplay style="width: 160px; height: 120px; border: 1px solid black;"></video>
+    <br />
+    <video id="local_screen_video" autoplay muted=true style="width: 40px; height: 30px; border: 1px solid black;"></video>
+    <br />
+    <video id="remote_screen_video" autoplay style="width: 100%; border: 1px solid black;"></video>
+</div>
+<p>SDP to send:<br />
+    <textarea id="text_for_send_sdp" rows="5" cols="60" readonly="readonly">SDP to send</textarea>
+</p>
+<p>SDP to receive:&nbsp;
+    <button type="button" onclick="onSdpText();">Receive remote SDP</button><br />
+    <textarea id="text_for_receive_sdp" rows="5" cols="60"></textarea>
+</p>
+
+<script type='text/javascript' src='./webrtc_screen.js'></script>
+
+
+</body>
+</html>

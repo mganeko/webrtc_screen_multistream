@@ -2,7 +2,8 @@
 
 このレポジトリは、[WebRTC Beginners Tokyo](https://webrtc.connpass.com) が開催する、WebRTCハンズオン勉強会用のサンプルです。
 
-- WebRTC ハンズオン ScreenCapture ＆ マルチストリーム編
+- [WebRTC ハンズオン ScreenCapture ＆ マルチストリーム編
+(https://qiita.com/massie_g/items/f852680b16c1b14cb9e8)
 
 # 動かし方
 

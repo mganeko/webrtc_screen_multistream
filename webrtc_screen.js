@@ -4,7 +4,7 @@ const textForSendSdp = document.getElementById('text_for_send_sdp');
 const textToReceiveSdp = document.getElementById('text_for_receive_sdp');
 let localStream = null;
 let peerConnection = null;
-let negotiationneededCounter = 0;
+//let negotiationneededCounter = 0;
 //let isOffer = false;
 
 // --- for Screen
@@ -12,7 +12,8 @@ let localScreenStream = null;
 const localScreenVideo = document.getElementById('local_screen_video');
 const remoteScreenVideo = document.getElementById('remote_screen_video');
 let screenSender = null;
-let negotiationneededCountdown = 0;
+//let negotiationneededCountdown = 0;
+let sendingOffer = false;
 
 // シグナリングサーバへ接続する
 const wsUrl = 'ws://localhost:3001/';
@@ -89,6 +90,11 @@ async function startVideo() {
 
 // Videoの再生を開始する
 async function playVideo(element, stream) {
+    if (element.srcObject === stream) {
+      console.warn('same stream. skip playVideo ');
+      return;
+    }
+
     element.srcObject = stream;
     try{
         await element.play();
@@ -152,6 +158,8 @@ function prepareNewConnection(isOffer) {
               console.warn('skip onnegotiationneeded(), not offer side');
             }
             */
+
+            /*
             if (negotiationneededCountdown === 0) {
                 console.warn('skip onnegotiationneeded(), not sending offer');
                 return;
@@ -161,7 +169,14 @@ function prepareNewConnection(isOffer) {
                 console.warn('skip onnegotiationneeded(), waiting for all tracks');
                 return;
             }
+            */
 
+            if (! sendingOffer) {
+              console.warn('skip onnegotiationneeded(), not sending offer');
+              return;              
+            }
+
+            sendingOffer = false;
             let offer = await peer.createOffer();
             console.log('createOffer() succsess in promise');
             await peer.setLocalDescription(offer);
@@ -193,7 +208,8 @@ function prepareNewConnection(isOffer) {
         localStream.getTracks().forEach(track => {
             peer.addTrack(track, localStream);
             if (isOffer) {
-              negotiationneededCountdown++;
+              sendingOffer = true;
+              //negotiationneededCountdown++;
             }
         });
     } else {
@@ -305,7 +321,7 @@ function hangUp(){
         if(peerConnection.iceConnectionState !== 'closed'){
             peerConnection.close();
             peerConnection = null;
-            negotiationneededCounter = 0;
+            //negotiationneededCounter = 0;
             const message = JSON.stringify({ type: 'close' });
             console.log('sending close message');
             ws.send(message);
@@ -343,8 +359,9 @@ async function addScreen() {
       playVideo(localScreenVideo, localScreenStream);
       console.log('Screen Capture OK');
 
-      negotiationneededCounter = 0;
-      negotiationneededCountdown = 1;
+      //negotiationneededCounter = 0;
+      //negotiationneededCountdown = 1;
+      sendingOffer = true;
       screenSender = peerConnection.addTrack(localScreenStream.getVideoTracks()[0], localScreenStream);
   } catch(err){
       console.error('mediaDevice.getDisplayMedia() error:', err);
@@ -352,40 +369,41 @@ async function addScreen() {
 }
 
 function removeScreen() {
-  if (screenSender) {
-    negotiationneededCounter = 0;
-    negotiationneededCountdown = 1;
-    peerConnection.removeTrack(screenSender);
-    screenSender = null;
-  }
-  if (localScreenStream) {
-    cleanupVideoElement(localScreenVideo);
-    stopStream(localScreenStream);
-    localScreenStream = null;
-  }
+    if (screenSender) {
+        //negotiationneededCounter = 0;
+        //negotiationneededCountdown = 1;
+        sendingOffer = true;
+        peerConnection.removeTrack(screenSender);
+        screenSender = null;
+    }
+    if (localScreenStream) {
+        cleanupVideoElement(localScreenVideo);
+        stopStream(localScreenStream);
+        localScreenStream = null;
+    }
 }
 
 function isVideoUsed(element) {
-  if (element.srcObject) {
-    return true;
-  }
-  else {
-    return false;
-  }
+    if (element.srcObject) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 function isVideoAvailable(element, stream) {
-  if (! element.srcObject) {
-    return true;
-  }
-  if (element.srcObject === stream) {
-    return true;
-  }
-  else {
-    return false;
-  }
+    if (! element.srcObject) {
+        return true;
+    }
+    if (element.srcObject === stream) {
+      return true;
+    }
+    else {
+      return false;
+    }
 }
 
 function stopStream(stream) {
-  stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach(track => track.stop());
 }

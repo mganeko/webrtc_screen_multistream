@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>WebRTC Hands-On 2019</title>
+</head>
+
+<body>
+WebRTC Hands-On 2019 ScreenCapture Test<br />
+<button type="button" onclick="captureGUM();">getUserMedia</button>
+<button type="button" onclick="captureDisplay();">navigator.getDisplayMedia</button>
+<button type="button" onclick="mediaDeviceCaptureDisplay()">mediaDevices.getDisplayMedia</button>
+&nbsp;
+<button type="button" onclick="stopScreen();">stop capture</button>
+
+<div style="width: 100%;">
+    <video id="local_video" autoplay muted=true style="width: 640px; height: 480px; border: 1px solid black;"></video>
+</div>
+
+<script type='text/javascript'>
+const localVideo = document.getElementById('local_video');
+let localStream = null;
+
+
+function stopScreen() {
+    cleanupVideoElement(localVideo);
+    if (localStream) {
+        stopStream(localStream);
+        localStream = null;
+    }
+}
+
+async function captureGUM() {
+    try{
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: {mediaSource: "screen"}
+        });
+        playVideo(localVideo, localStream);
+        console.log('getUserMedia Screen Capture OK');
+    } catch(err){
+        console.error('navigator.mediaDevices.getUserMedia() error:', err);
+    }
+}
+
+async function captureDisplay() {
+    try{
+        localStream = await navigator.getDisplayMedia({video: true});
+        playVideo(localVideo, localStream);
+        console.log('navigator.getDisplayMedia Screen Capture OK');
+    } catch(err){
+        console.error('navigator.getDisplayMedia() error:', err);
+    }
+}
+
+async function mediaDeviceCaptureDisplay() {
+    try{
+        localStream = await navigator.mediaDevices.getDisplayMedia({video: true});
+        playVideo(localVideo, localStream);
+        console.log('mediaDevice.getDisplayMedia　Screen Capture OK');
+    } catch(err){
+        console.error('mediaDevice.getDisplayMedia() error:', err);
+    }
+}
+
+// Videoの再生を開始する
+async function playVideo(element, stream) {
+    if (element.srcObject === stream) {
+      console.warn('same stream. skip playVideo ');
+      return;
+    }
+
+    element.srcObject = stream;
+    try{
+        await element.play();
+    }
+    catch(err) {
+        console.error(err)
+    };
+}
+
+// ビデオエレメントを初期化する
+function cleanupVideoElement(element) {
+    element.pause();
+    element.srcObject = null;
+}
+
+function stopStream(stream) {
+    stream.getTracks().forEach(track => track.stop());
+}
+</script>
+
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 # はじめに
 
-このレポジトリは、WebRTC Beginners Tokyo の WebRTC ハンズオン勉強会向けのサンプルです。
+このレポジトリは、[WebRTC Beginners Tokyo](https://webrtc.connpass.com) が開催する、WebRTCハンズオン勉強会用のサンプルです。
 
 - WebRTC ハンズオン ScreenCapture ＆ マルチストリーム編
 
@@ -19,3 +19,7 @@
     - スクリーン全体、ウィンドウを選択する
     - → キャプチャーが始まり、もう一方のブラウザに表示される
 - [Remove Screen]ボタンをクリックすると、キャプチャーが終了する
+
+# License
+
+- MIT License

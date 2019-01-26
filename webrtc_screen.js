@@ -90,7 +90,12 @@ async function startVideo() {
 // Videoの再生を開始する
 async function playVideo(element, stream) {
     element.srcObject = stream;
-    await element.play();
+    try{
+        await element.play();
+    }
+    catch(err) {
+        console.error(err)
+    };
 }
 
 // WebRTCを利用する準備をする

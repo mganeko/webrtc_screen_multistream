@@ -78,6 +78,10 @@
 
     // Videoの再生を開始する
     async function playVideo(element, stream) {
+      if (stream) {
+        console.log('videoTracks=%d, audoTracks=%d', stream.getVideoTracks().length, stream.getAudioTracks().length);
+      }
+
       if (element.srcObject === stream) {
         console.warn('same stream. skip playVideo ');
         return;

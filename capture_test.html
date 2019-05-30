@@ -62,10 +62,14 @@
     async function mediaDeviceCaptureDisplay() {
       //const option = {video: true};
       //const option = {video: {width: 320, height: 180}}; // OK (Chrome Canary 73)
-      const option = { video: { frameRate: 1 }, audio: withAudio() }; // OK (Chrome Canary 73)
+      //const option = { video: { frameRate: 1 } }; // OK (Chrome Canary 73)
       //const option = {video: {displaySurface: 'browser'}}; // NG (Chrome Canary 73)
       //const option = {video: {cursor: 'never'}}; // NG (Chrome Canary 73)
       //const option = {video: {aspectRatio: 1.0, resizeMode: 'crop-and-scale'}}; // NG (Chrome Canary 73)
+
+      const option = { video: { frameRate: 1 }, audio: withAudio() }; // OK (Chrome 74)
+      //const option = { video: { frameRate: 1 }, audio: { restrictOwnAudio: false } }; // OK (Chrome 74)
+      console.log('getDisplayMedia() option:', option);
 
       try {
         localStream = await navigator.mediaDevices.getDisplayMedia(option);

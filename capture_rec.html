@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>capture rec</title>
+</head>
+
+<body>
+  WebRTC Hands-On 2019 ScreenCapture Test<br />
+  <button type="button" onclick="mediaDeviceCaptureDisplay()">mediaDevices.getDisplayMedia</button>
+  <input type="checkbox" id="audio_check">with audio</input>
+  &nbsp;
+  <button type="button" onclick="stopScreen();">stop capture</button>
+  &nbsp;
+  <button type="button" onclick="startRecording();">start rec</button>
+  <button type="button" onclick="stopRecording();">stop rec</button>
+  <a href="#" id="downloadlink">Download</a>
+
+  <div style="width: 100%;">
+    <video id="local_video" autoplay muted=true controls="1"
+      style="width: 640px; height: 480px; border: 1px solid black;"></video>
+    <video id="playback_video" autoplay muted=true controls="1"
+      style="width: 320px; height: 240px; border: 1px solid black;"></video>
+  </div>
+
+  <script type='text/javascript'>
+    const localVideo = document.getElementById('local_video');
+    const audioCheck = document.getElementById('audio_check');
+    let localStream = null;
+
+    // ==== (2) 録画の準備 ====
+    // --- recording ---
+    const playbackVideo = document.getElementById('playback_video');
+    let recorder = null;
+    let blobUrl = null;
+    let chunks = [];
+    // ==== (2) 録画の準備 ====
+
+    // ==== (3) ダウンロードの準備 ====
+    const anchor = document.getElementById('downloadlink');
+    // ==== (3) ダウンロードの準備 ====
+
+    function withAudio() {
+      return audioCheck.checked;
+    }
+
+    function stopScreen() {
+      cleanupVideoElement(localVideo);
+      if (localStream) {
+        stopStream(localStream);
+        localStream = null;
+      }
+    }
+
+    async function captureGUM() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { mediaSource: "screen" },
+          audio: withAudio()
+        });
+        playVideo(localVideo, localStream);
+        console.log('getUserMedia Screen Capture OK');
+      } catch (err) {
+        console.error('navigator.mediaDevices.getUserMedia() error:', err);
+      }
+    }
+
+    async function captureDisplay() {
+      try {
+        localStream = await navigator.getDisplayMedia({ video: true, audio: withAudio() });
+        playVideo(localVideo, localStream);
+        console.log('navigator.getDisplayMedia Screen Capture OK');
+      } catch (err) {
+        console.error('navigator.getDisplayMedia() error:', err);
+      }
+    }
+
+    async function mediaDeviceCaptureDisplay() {
+      //const option = {video: true};
+      //const option = {video: {width: 320, height: 180}}; // OK (Chrome Canary 73)
+      //const option = { video: { frameRate: 1 } }; // OK (Chrome Canary 73)
+      //const option = {video: {displaySurface: 'browser'}}; // NG (Chrome Canary 73)
+      //const option = {video: {cursor: 'never'}}; // NG (Chrome Canary 73)
+      //const option = {video: {aspectRatio: 1.0, resizeMode: 'crop-and-scale'}}; // NG (Chrome Canary 73)
+
+      //const option = { video: { frameRate: 1 }, audio: withAudio() }; // OK (Chrome 74)
+      const option = { video: true, audio: withAudio() }; // OK (Chrome 74)
+      //const option = { video: { frameRate: 1 }, audio: { restrictOwnAudio: false } }; // OK (Chrome 74)
+      console.log('getDisplayMedia() option:', option);
+
+      try {
+        localStream = await navigator.mediaDevices.getDisplayMedia(option);
+        playVideo(localVideo, localStream);
+        console.log('mediaDevice.getDisplayMedia　Screen Capture OK');
+      } catch (err) {
+        console.error('mediaDevice.getDisplayMedia() error:', err);
+      }
+    }
+
+    // Videoの再生を開始する
+    async function playVideo(element, stream) {
+      if (stream) {
+        console.log('videoTracks=%d, audoTracks=%d', stream.getVideoTracks().length, stream.getAudioTracks().length);
+      }
+
+      if (element.srcObject === stream) {
+        console.warn('same stream. skip playVideo ');
+        return;
+      }
+
+      element.srcObject = stream;
+      try {
+        await element.play();
+      }
+      catch (err) {
+        console.error(err)
+      };
+    }
+
+    // ビデオエレメントを初期化する
+    function cleanupVideoElement(element) {
+      element.pause();
+      element.srcObject = null;
+    }
+
+    function stopStream(stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+
+    // ==== (2) 録画 ====
+    // -- 録画開始 --
+    function startRecording() {
+      // チェック
+      if (!localStream) {
+        console.warn('stream not ready');
+        return;
+      }
+      if (recorder) {
+        console.warn('already recording');
+        return;
+      }
+
+      //recorder = new MediaRecorder(localStream);
+      ///* -- option を使う場合のサンプル --
+      var options = {
+        audioBitsPerSecond: 128000,
+        videoBitsPerSecond: 1024000,
+        mimeType: 'video/webm; codecs=vp9'
+      };
+      recorder = new MediaRecorder(localStream, options);
+      //-- option を使う場合のサンプル ---*/
+
+      chunks = []; // 格納場所をクリア
+
+      // 録画進行中に、インターバルに合わせて発生するイベント
+      recorder.ondataavailable = function (evt) {
+        console.log("data available: evt.data.type=" + evt.data.type + " size=" + evt.data.size);
+        chunks.push(evt.data);
+      };
+
+      // 録画停止時のイベント
+      recorder.onstop = function (evt) {
+        console.log('recorder.onstop(), so playback');
+        recorder = null;
+        playRecorded();
+      };
+
+      // 録画スタート
+      recorder.start(1000); // インターバルは1000ms
+      console.log('start recording');
+    }
+
+    // -- 録画停止 -- 
+    function stopRecording() {
+      if (recorder) {
+        recorder.stop();
+        console.log("stop recording");
+      }
+    }
+
+    // -- 再生 --
+    function playRecorded() {
+      if (!blobUrl) {
+        window.URL.revokeObjectURL(blobUrl);
+        blobUrl = null;
+      }
+
+      // Blob
+      var videoBlob = new Blob(chunks, { type: "video/webm" });
+
+      // 再生できるようにURLを生成
+      blobUrl = window.URL.createObjectURL(videoBlob);
+
+      // ==== (3) ダウンロード ====
+      // ダウンロードの準備
+      anchor.download = 'recorded.webm';
+      anchor.href = blobUrl;
+      // ==== (3) ダウンロード ====
+
+      // 録画した内容を再生
+      if (blobUrl) {
+        playbackVideo.src = blobUrl;
+
+        // 再生終了時の処理
+        playbackVideo.onended = function () {
+          playbackVideo.pause();
+          playbackVideo.src = "";
+        };
+
+        // 再生開始
+        playbackVideo.play();
+      }
+    }
+  // ==== (2) 録画 ====
+  </script>
+
+
+</body>
+
+</html>
